@@ -22,7 +22,12 @@ app.use(fileUpload({
     fileSize: 2 * 1024 * 1024 * 1024, // 2MB max file(s) size
   },
 }));
-app.use(cors());
+
+const corsOptions = {
+  origin: '*', // TODO: CHANGE THIS AFTER TESTING
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 app.use(require('morgan')('combined'));
 
 // ------------ API--------------
