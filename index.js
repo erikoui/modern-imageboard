@@ -6,6 +6,24 @@ const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const _ = require('lodash');
 
+/**
+ * asdasd
+ * @param {ashdjhask} inputText asdhklasd
+ * @return {asd} benis
+ */
+function getHashTags(inputText) {
+  const regex = /(?:^|\s)(?:#)([a-zA-Z\d]+)/gm;
+  const matches = [];
+  let match;
+
+  while ((match = regex.exec(inputText))) {
+    matches.push(match[1]);
+  }
+
+  return matches;
+}
+
+
 // Server port to listen on
 const PORT = process.env.PORT || 5000;
 const corsOptions = {
@@ -77,11 +95,12 @@ app.post('/newpost', async (req, res) => {
         data.push(img.name);
       });
 
+      tags=getHashTags(req.body.content);
       db.posts.add(
-          req.name,
-          req.content,
+          req.body.name,
+          req.body.content,
           data,
-          req.tags,
+          tags,
       ).then(()=>{
         res.json({
           err: false,
