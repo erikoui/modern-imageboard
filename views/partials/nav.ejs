@@ -1,0 +1,25 @@
+<nav class="navbar navbar-light" style="background-color: #e3f2fd;">
+  <div class="container">
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="/"><span class="glyphicon glyphicon-home"></span> Home</a>
+      </li>
+      <li>
+        <a href="/archive"><span class="glyphicon glyphicon-th"></span> Archive</a>
+      </li>
+      <li>
+        <a href="/about"><span class="glyphicon glyphicon-info-sign"></span> About</a>
+      </li>
+      <li>
+        <a href="/blog"><span class="glyphicon glyphicon-bullhorn"></span> Blog</a>
+      </li>
+    </ul>
+    <div class="navbar-right navbar-text">
+        <% if (!user) { %>
+          Welcome! Please <a href="/login" id="login-link">Log in</a> or <a href="/register">Register</a>.
+        <% } else { %>
+          Logged in as <%= user.uname %>. Your points: <div id="points" style="display:inline"><%=user.points%> (Level <%=user.level%>)</div>. View your <a href="/profile">profile</a> or <a href="/logout">Log out</a>.
+        <% } %>
+        </div>
+  </div>
+</nav>
