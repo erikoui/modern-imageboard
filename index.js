@@ -74,18 +74,24 @@ app.post('/newpost', async (req, res) => {
         img.mv('./uploads/' + img.name);
 
         // push file details
-        data.push({
-          name: img.name,
-          mimetype: img.mimetype,
-          size: img.size,
-        });
+        data.push(img.name);
       });
 
-      // return response
-      res.json({
-        err: false,
-        message: 'Files are uploaded',
-        data: data,
+      db.posts.add(
+          req.name,
+          req.content,
+          data,
+          req.tags,
+      ).then(()=>{
+        res.json({
+          err: false,
+          message: 'Post successful',
+        });
+      }).catch((e)=>{
+        res.json({
+          err: true,
+          message: 'Database error: '+e.message,
+        });
       });
     }
   } catch (err) {
