@@ -45,9 +45,10 @@ app.get('/replies', (req, res)=>{
     });
   }
 });
-app.post('/newpost',(req,res)=>{
+app.post('/newpost', (req, res)=>{
+  res.end('asd');
+});
 
-}
 
 // --------------- Start Server ----------------
 app.listen(PORT, () => console.log(`Listening on ${PORT}`));
