@@ -28,12 +28,14 @@ class Posts {
    * @param {string} content - the post
    * @param {array<string>} filenames - filenames
    * @param {array<string>} tags - hashtags
+   * @param {int} replyto - post id replying to
    */
   async add(
       name,
       content,
       filenames,
       tags,
+      replyto,
   ) {
     return this.db.any(
         'INSERT INTO posts(${this:name}) VALUES(${this:csv})',
@@ -43,6 +45,7 @@ class Posts {
           filenames: filenames,
           tags: tags,
           views: 0,
+          replyto: replyto,
         },
     );
   }

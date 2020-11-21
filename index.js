@@ -101,6 +101,7 @@ app.post('/newpost', async (req, res) => {
           req.body.content,
           data,
           tags,
+          req.body.replyto,
       ).then(()=>{
         res.json({
           err: false,
