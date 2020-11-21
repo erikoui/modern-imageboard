@@ -39,7 +39,7 @@ class Posts {
         'INSERT INTO posts(${this:name}) VALUES(${this:csv})',
         {
           name: name,
-          details: content,
+          content: content,
           filenames: filenames,
           tags: tags,
           views: 0,
