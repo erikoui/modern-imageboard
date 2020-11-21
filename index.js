@@ -70,14 +70,14 @@ app.post('/newpost', async (req, res) => {
       _.forEach(_.keysIn(req.files.images), (key) => {
         const img = req.files.images[key];
 
-        // move photo to uploads directory
+        // move img to uploads directory
         img.mv('./uploads/' + img.name);
 
         // push file details
         data.push({
-          name: photo.name,
-          mimetype: photo.mimetype,
-          size: photo.size,
+          name: img.name,
+          mimetype: img.mimetype,
+          size: img.size,
         });
       });
 
