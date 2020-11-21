@@ -24,58 +24,53 @@ class Posts {
 
   /**
    * Adds a report to the reports table
-   * @param {string} rtype - report type (from declutter.reportTypes)
-   * @param {string} details - details if entered
-   * @param {int} picid - picture id
-   * @param {int} reportedbyid - user id
-   * @param {string} reportedbyuname - user name
-   * @param {string} suggestedfix - suggestion if entered
+   * @param {string} name - poster name
+   * @param {string} content - the post
+   * @param {array<string>} filenames - filenames
+   * @param {array<string>} tags - hashtags
    */
   async add(
-      rtype,
-      details,
-      picid,
-      reportedbyid,
-      reportedbyuname,
-      suggestedfix,
+      name,
+      content,
+      filenames,
+      tags,
   ) {
     return this.db.any(
-        'INSERT INTO reports(${this:name}) VALUES(${this:csv})',
+        'INSERT INTO posts(${this:name}) VALUES(${this:csv})',
         {
-          rtype: rtype,
-          details: details,
-          picid: picid,
-          reportedbyid: reportedbyid,
-          reportedbyuname: reportedbyuname,
-          suggestedfix: suggestedfix,
+          name: name,
+          details: content,
+          filenames: filenames,
+          tags: tags,
+          views: 0,
         },
     );
   }
 
   /**
-   * Returns all report records
+   * Returns all post records
    */
   async all() {
-    return this.db.any('SELECT * FROM reports');
+    return this.db.any('SELECT * FROM posts');
   }
 
   /**
-   * deletes reports
-   * @param {int} picid - picture id
+   * deletes posts
+   * @param {int} id - post id
    */
-  async deleteByPicId(picid) {
-    return this.db.any('DELETE FROM reports WHERE picid=${id};', {
-      id: picid,
+  async deleteById(id) {
+    return this.db.any('DELETE FROM posts WHERE id=${id};', {
+      id: id,
     });
   }
 
   /**
-   * returns all reports of a picture
-   * @param {int} picid - picture id
+   * returns all replies of a post
+   * @param {int} id - post id
    */
-  async getByPicId(picid) {
-    return this.db.any('SELECT * FROM reports WHERE picid=${id};', {
-      id: picid,
+  async getReplies(id) {
+    return this.db.any('SELECT * FROM posts WHERE replyto=${id};', {
+      id: id,
     });
   }
 }
