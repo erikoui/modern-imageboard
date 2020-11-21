@@ -8,10 +8,14 @@ const _ = require('lodash');
 
 // Server port to listen on
 const PORT = process.env.PORT || 5000;
+const corsOptions = {
+  origin: '*', // TODO: CHANGE THIS AFTER TESTING
+  optionsSuccessStatus: 200,
+};
+
 app = express();
 // ------------ init middlewares ------------
-// Request logger
-
+app.use(cors(corsOptions));
 // Accepting json bodies (🔥hot🔥)
 app.use(bodyParser.json({type: 'application/json'}));
 // Also accepting file uploads
@@ -22,12 +26,7 @@ app.use(fileUpload({
     fileSize: 2 * 1024 * 1024 * 1024, // 2MB max file(s) size
   },
 }));
-
-const corsOptions = {
-  origin: '*', // TODO: CHANGE THIS AFTER TESTING
-  optionsSuccessStatus: 200,
-};
-app.use(cors(corsOptions));
+// Request logger
 app.use(require('morgan')('combined'));
 
 // ------------ API--------------
