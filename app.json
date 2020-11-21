@@ -1,0 +1,8 @@
+{
+  "name": "S-tashe",
+  "description": "stashe",
+  "repository": "https://github.com/erikoui/s-tashe",
+  "logo": "https://cdn.rawgit.com/heroku/node-js-getting-started/main/public/node.svg",
+  "keywords": [],
+  "image": "heroku/nodejs"
+}
