@@ -1,31 +1,19 @@
-// Load dependencies
+// Load dependencies (npm)
 const express = require('express');
-const {db} = require('./db');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fileUpload = require('express-fileupload');
-const _ = require('lodash');
+const morgan = require('morgan');
 
-/**
- * asdasd
- * @param {ashdjhask} inputText asdhklasd
- * @return {asd} benis
- */
-function getHashTags(inputText) {
-  const regex = /(?:^|\s)(?:#)([a-zA-Z\d]+)/gm;
-  const matches = [];
-  let match;
-
-  while ((match = regex.exec(inputText))) {
-    matches.push(match[1]);
-  }
-
-  return matches;
-}
-
+// Local modules
+const {db} = require('./db');
+const StringFunctions = require('./helpers/strfncs');
+const strfncs=new StringFunctions();
 
 // Server port to listen on
 const PORT = process.env.PORT || 5000;
+
+// Cross origin policy options
 const corsOptions = {
   origin: '*', // TODO: CHANGE THIS AFTER TESTING
   optionsSuccessStatus: 200,
@@ -33,11 +21,13 @@ const corsOptions = {
 
 app = express();
 // ------------ init middlewares ------------
+// Cross origin policy
 app.use(cors(corsOptions));
 // Accepting json bodies (🔥hot🔥)
 app.use(bodyParser.json({type: 'application/json'}));
-// Also accepting file uploads
+// Also accepting file upload forms
 app.use(bodyParser.urlencoded({extended: true}));
+// file upload settings
 app.use(fileUpload({
   createParentPath: true,
   limits: {
@@ -45,7 +35,7 @@ app.use(fileUpload({
   },
 }));
 // Request logger
-app.use(require('morgan')('combined'));
+app.use(morgan('combined'));
 
 // ------------ API--------------
 app.get('/test', (req, res) => {
@@ -54,11 +44,33 @@ app.get('/test', (req, res) => {
     message: 'hello world',
   });
 });
+
+// Returns all the posts
+// Defaults to ordered by date, unless the order is
+// explicitly set as a GET query
 app.get('/allposts', (req, res) => {
-  db.posts.all().then((data) => {
+  db.posts.all(req.query.order).then((data) => {
     res.json(data);
+  }).catch((e)=>{
+    res.status(500).json({
+      message: e.message,
+    });
   });
 });
+
+// Returns all posts whose replyto field is null.
+// This means these are all the posts that do not reply to anything
+app.get('/rootposts', (req, res) =>{
+  db.posts.rootPosts().then((data)=>{
+    res.json(data);
+  }).catch((e)=>{
+    res.status(500).json({
+      message: e.message,
+    });
+  });
+});
+
+// Returns the replies to a post specified by id
 app.get('/replies', (req, res) => {
   const postId = req.query.postid;
   if (postId) {
@@ -68,54 +80,86 @@ app.get('/replies', (req, res) => {
         ...data,
       });
     }).catch((e) => {
-      res.status(500).send(e);
+      res.status(500).json({
+        message: e.message,
+      });
     });
   } else {
-    res.status(500).send(new Error('No post id specified'));
+    res.status(500).json({
+      message: 'No post id specified (try: /replies?postid=2)',
+    });
   }
 });
+
+// TODO: check file extensions
 app.post('/newpost', async (req, res) => {
   try {
-    if (!req.files) {
-      res.json({
-        err: true,
-        message: 'No file uploaded',
+    if (!req.files.images) {
+      res.status(500).json({
+        message: 'No file uploaded (make sure files[] is populated)',
+      });
+    } else if (req.files.images.length>4) {
+      res.status(500).json({
+        message: 'More than 4 files selected',
       });
     } else {
-      const data = [];
-
+      const filepaths = [];
+      const promises=[];
+      // Apparently uploading one file turns the files[] array into a
+      // single object instead of an array with 1 object so we fix that
+      let files;
+      if (req.files.images.length>1) {
+        files=req.files.images;
+      } else {
+        files=[req.files.images];
+      }
       // loop all files
-      _.forEach(_.keysIn(req.files.images), (key) => {
-        const img = req.files.images[key];
-
-        // move img to uploads directory
-        img.mv('./uploads/' + img.name);
+      for (let i=0; i<files.length; i++) {
+        const img = files[i];
+        console.log(img);
+        // move img to uploads directory, store the callback into a promise
+        img.mv('./uploads/' + img.name, function(err) {
+          const promise = new Promise(function(resolve, reject) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+          promises.push(promise);
+        });
 
         // push file details
-        data.push(img.name);
-      });
-
-      tags=getHashTags(req.body.content);
-      db.posts.add(
-          req.body.name,
-          req.body.content,
-          data,
-          tags,
-          req.body.replyto,
-      ).then(()=>{
-        res.json({
-          err: false,
-          message: 'Post successful',
+        filepaths.push('./uploads/' + img.name);
+      }
+      // when all the files have been uploaded update db and return ok
+      Promise.all(promises).then(()=>{
+        tags=strfncs.getHashTags(req.body.content);
+        db.posts.add(
+            req.body.name,
+            req.body.content,
+            filepaths,
+            tags,
+            req.body.replyto,
+        ).then(()=>{
+          res.json({
+            message: 'Post successful',
+          });
+        }).catch((e)=>{
+          res.status(500).json({
+            message: e.message,
+          });
         });
       }).catch((e)=>{
-        res.json({
-          err: true,
-          message: 'Database error: '+e.message,
+        res.status(500).json({
+          message: e.message,
         });
       });
     }
   } catch (err) {
-    res.end(err.message);
+    res.status(500).json({
+      message: err.message,
+    });
   }
 });
 

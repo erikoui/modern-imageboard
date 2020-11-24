@@ -52,9 +52,38 @@ class Posts {
 
   /**
    * Returns all post records
+   *
+   * @param {string} order - Order by (name,date,views,likes,replies)
    */
-  async all() {
-    return this.db.any('SELECT * FROM posts');
+  async all(order) {
+    // eslint-disable-next-line max-len
+    let sql = 'SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=p.id) AS r) AS  replies FROM posts p';
+
+    if (order.length > 0) {
+      sql += ' ORDER BY ';
+      sql += this.pgp.as.name(order) +' DESC';
+    } else {
+      sql+=' ORDER BY date DESC';
+    }
+    return this.db.any(sql);
+  }
+
+  /**
+   * Returns all posts that do not reply to some parent post
+   *
+   * @param {string} order - Order by (name,date,views,likes,replies)
+   */
+  async rootPosts(order) {
+    // eslint-disable-next-line max-len
+    let sql = 'SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=p.id) AS r) AS  replies FROM posts p WHERE replyto IS NULL';
+
+    if (order.length > 0) {
+      sql += ' ORDER BY ';
+      sql += this.pgp.as.name(order) +' DESC';
+    } else {
+      sql+=' ORDER BY date DESC';
+    }
+    return this.db.any(sql);
   }
 
   /**
@@ -72,7 +101,8 @@ class Posts {
    * @param {int} id - post id
    */
   async getReplies(id) {
-    return this.db.any('SELECT * FROM posts WHERE replyto=${id};', {
+    // eslint-disable-next-line max-len
+    return this.db.any('SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=p.id) AS r) AS  replies FROM posts p WHERE replyto=${id};', {
       id: id,
     });
   }
