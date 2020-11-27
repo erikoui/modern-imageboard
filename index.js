@@ -38,6 +38,9 @@ app.use(fileUpload({
 app.use(morgan('combined'));
 
 // ------------ API--------------
+/**
+ * Returns a hello world json
+ */
 app.get('/test', (req, res) => {
   res.json({
     err: false,
@@ -45,9 +48,32 @@ app.get('/test', (req, res) => {
   });
 });
 
-// Returns all the posts
-// Defaults to ordered by date, unless the order is
-// explicitly set as a GET query
+/**
+ * Returns all posts. Defaults to ordered by date, unless
+ * the order is explicitly set as a GET query.
+ *
+ * order=[name,date,views,likes,replies]
+ *
+ * @example GET /allposts?order=views
+ *
+ * @returns {
+ *  [
+ *    {
+ *      "id":17,
+ *      "name":"anonymous",
+ *      "content":"posting 2 diles",
+ *      "date":"2020-11-24T17:34:31.373Z",
+ *      "views":0,
+ *      "tags":[],
+ *      "filenames":["./uploads/1606235445457.jpg"],
+ *      "replyto":null,
+ *      "likes":0,
+ *      "replies":"0"
+ *    },
+ *    ...
+ *  ]
+ * }
+ */
 app.get('/allposts', (req, res) => {
   db.posts.all(req.query.order).then((data) => {
     res.json(data);
@@ -58,10 +84,36 @@ app.get('/allposts', (req, res) => {
   });
 });
 
-// Returns all posts whose replyto field is null.
-// This means these are all the posts that do not reply to anything
+/**
+ * Returns all posts whose replyto field is null.
+ * This means these are all the posts that do not reply to anything.
+ * Defaults to ordered by date, unless the order is explicitly set
+ * as a GET query.
+ *
+ * @param {string} order = [name,date,views,likes,replies]
+ *
+ * @example GET /rootposts?order=likes
+ *
+ * @returns {
+ *  [
+ *    {
+ *      "id":17,
+ *      "name":"anonymous",
+ *      "content":"posting 2 diles",
+ *      "date":"2020-11-24T17:34:31.373Z",
+ *      "views":0,
+ *      "tags":[],
+ *      "filenames":["./uploads/1606235445457.jpg"],
+ *      "replyto":null,
+ *      "likes":0,
+ *      "replies":"0"
+ *    },
+ *    ...
+ *  ]
+ * }
+ */
 app.get('/rootposts', (req, res) =>{
-  db.posts.rootPosts().then((data)=>{
+  db.posts.rootPosts(req.query.order).then((data)=>{
     res.json(data);
   }).catch((e)=>{
     res.status(500).json({
@@ -70,7 +122,31 @@ app.get('/rootposts', (req, res) =>{
   });
 });
 
-// Returns the replies to a post specified by id
+/**
+ * Returns the replies to a post specified by id
+ *
+ * @param {int} postid - The post id
+ *
+ * @example GET /replies?postid=334
+ *
+ * @returns {
+ *  [
+  *    {
+  *      "id":17,
+  *      "name":"anonymous",
+  *      "content":"posting 2 diles",
+  *      "date":"2020-11-24T17:34:31.373Z",
+  *      "views":0,
+  *      "tags":[],
+  *      "filenames":["./uploads/1606235445457.jpg"],
+  *      "replyto":11,
+  *      "likes":0,
+  *      "replies":"0"
+  *    },
+  *    ...
+  *  ]
+  * }
+ */
 app.get('/replies', (req, res) => {
   const postId = req.query.postid;
   if (postId) {
@@ -91,8 +167,27 @@ app.get('/replies', (req, res) => {
   }
 });
 
-// TODO: check file extensions
+/**
+ * Adds a new post to the database, and saves the files to the server
+ *
+ * @param {array<file>} files - array of files from formdata
+ * @param {string} content - Text of the post content
+ * @param {string} name - OP name
+ * @param {int} replyto - post number replying to (null if not replying)
+ *
+ * @example POST /newpost {
+ *     files:[file1,file2],
+ *     content: 'hello world',
+ *     name:'Anonymous',
+ *     replyto: null
+ * }
+ *
+ * @returns {
+ *    message: 'post successful'
+ * }
+ */
 app.post('/newpost', async (req, res) => {
+  // TODO: check file extensions
   try {
     if (!req.files.images) {
       res.status(500).json({
@@ -161,6 +256,29 @@ app.post('/newpost', async (req, res) => {
       message: err.message,
     });
   }
+});
+
+/**
+ * Adds a like to a post, and returns the new number of likes.
+ *
+ * @param {int} postid - post id
+ *
+ * @example PUT /like?postid=54
+ *
+ * @returns {
+ *    id: 54
+ *    likes: 199
+ * }
+ */
+app.put('/like', (req, res)=>{
+  // TODO: limit to one like per cookie session
+  db.posts.like(req.query.postid).then((data)=>{
+    res.json(data);
+  }).catch((e)=>{
+    res.status(500).json({
+      message: e.message,
+    });
+  });
 });
 
 

@@ -59,7 +59,7 @@ class Posts {
     // eslint-disable-next-line max-len
     let sql = 'SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=p.id) AS r) AS  replies FROM posts p';
 
-    if (order.length > 0) {
+    if (order) {
       sql += ' ORDER BY ';
       sql += this.pgp.as.name(order) +' DESC';
     } else {
@@ -77,7 +77,7 @@ class Posts {
     // eslint-disable-next-line max-len
     let sql = 'SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=p.id) AS r) AS  replies FROM posts p WHERE replyto IS NULL';
 
-    if (order.length > 0) {
+    if (order) {
       sql += ' ORDER BY ';
       sql += this.pgp.as.name(order) +' DESC';
     } else {
@@ -103,6 +103,17 @@ class Posts {
   async getReplies(id) {
     // eslint-disable-next-line max-len
     return this.db.any('SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=p.id) AS r) AS  replies FROM posts p WHERE replyto=${id};', {
+      id: id,
+    });
+  }
+
+  /**
+   * Likes a post by incrementing the like column and returns the new likes
+   * @param {int} id - post id to like
+   */
+  async like(id) {
+    // eslint-disable-next-line max-len
+    return this.db.one('UPDATE posts SET likes=likes+1 WHERE id=${id} RETURNING id,likes;', {
       id: id,
     });
   }
