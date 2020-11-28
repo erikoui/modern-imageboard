@@ -46,6 +46,7 @@ class Posts {
           tags: tags,
           views: 0,
           replyto: replyto,
+          likes: 0,
         },
     );
   }

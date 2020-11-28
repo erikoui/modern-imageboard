@@ -188,62 +188,77 @@ app.get('/replies', (req, res) => {
  */
 app.post('/newpost', async (req, res) => {
   // TODO: check file extensions
+  const filepaths = [];
+  const allFileUploadPromises=[];
+  const tags=strfncs.getHashTags(req.body.content);
   try {
-    if (!req.files.images) {
-      res.status(500).json({
-        message: 'No file uploaded (make sure files[] is populated)',
-      });
-    } else if (req.files.images.length>4) {
-      res.status(500).json({
-        message: 'More than 4 files selected',
-      });
-    } else {
-      const filepaths = [];
-      const promises=[];
-      // Apparently uploading one file turns the files[] array into a
-      // single object instead of an array with 1 object so we fix that
-      let files;
-      if (req.files.images.length>1) {
-        files=req.files.images;
-      } else {
-        files=[req.files.images];
-      }
-      // loop all files
-      for (let i=0; i<files.length; i++) {
-        const img = files[i];
-        console.log(img);
-        // move img to uploads directory, store the callback into a promise
-        img.mv('./uploads/' + img.name, function(err) {
-          const promise = new Promise(function(resolve, reject) {
-            if (err) {
-              reject(err);
-            } else {
-              resolve();
-            }
-          });
-          promises.push(promise);
+    if (req.files) {
+      if (req.files.images.length>4) {
+        res.status(500).json({
+          message: 'More than 4 files selected',
         });
+      } else {
+        // Apparently uploading one file turns the files[] array into a
+        // single object instead of an array with 1 object so we fix that
+        let files;
+        if (req.files.images.length>1) {
+          files=req.files.images;
+        } else {
+          files=[req.files.images];
+        }
+        // loop all files
+        for (let i=0; i<files.length; i++) {
+          const img = files[i];
+          // const extension = img.name.
+          // if ((/\.(gif|jpe?g|tiff?|png|webp|bmp|webm)$/i).test()) {
+          // move img to uploads directory, store the callback into a promise
+          img.mv('./uploads/' + img.name, function(err) {
+            const fileUploadPromise = new Promise(function(resolve, reject) {
+              if (err) {
+                reject(err);
+              } else {
+                resolve();
+              }
+            });
+            allFileUploadPromises.push(fileUploadPromise);
+          });
 
-        // push file details
-        filepaths.push('./uploads/' + img.name);
-      }
-      // when all the files have been uploaded update db and return ok
-      Promise.all(promises).then(()=>{
-        tags=strfncs.getHashTags(req.body.content);
-        db.posts.add(
-            req.body.name,
-            req.body.content,
-            filepaths,
-            tags,
-            req.body.replyto,
-        ).then(()=>{
-          res.json({
-            message: 'Post successful',
+          // push file details
+          filepaths.push('./uploads/' + img.name);
+        }
+        // when all the files have been uploaded update db and return ok
+        Promise.all(allFileUploadPromises).then(()=>{
+          db.posts.add(
+              req.body.name,
+              req.body.content,
+              filepaths,
+              tags,
+              req.body.replyto,
+          ).then(()=>{
+            res.json({
+              message: 'Post successful',
+            });
+          }).catch((e)=>{
+            res.status(500).json({
+              message: e.message,
+            });
           });
         }).catch((e)=>{
           res.status(500).json({
             message: e.message,
           });
+        });
+      }
+    } else {// no file to upload
+      db.posts.add(
+          req.body.name,
+          req.body.content,
+          [],
+          tags,
+          req.body.replyto,
+      ).then(()=>{
+        res.json({
+          message: 'Post successful',
         });
       }).catch((e)=>{
         res.status(500).json({
