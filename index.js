@@ -123,6 +123,49 @@ app.get('/rootposts', (req, res) =>{
 });
 
 /**
+ * Returns all posts with the given hashtag
+ * Defaults to ordered by date, unless the order is explicitly set
+ * as a GET query.
+ *
+ * @param {string} tag = The hashtag to search for
+ * @param {string} order = [name,date,views,likes,replies]
+ *
+ * @example GET /rootposts?order=likes
+ *
+ * @returns {
+  *  [
+    *    {
+    *      "id":17,
+    *      "name":"anonymous",
+    *      "content":"posting 2 diles",
+    *      "date":"2020-11-24T17:34:31.373Z",
+    *      "views":0,
+    *      "tags":['test'],
+    *      "filenames":["./uploads/1606235445457.jpg"],
+    *      "replyto":null,
+    *      "likes":0,
+    *      "replies":"0"
+    *    },
+    *    ...
+    *  ]
+    * }
+    */
+app.get('/hashtag', (req, res) =>{
+  if (!req.query.tag) {
+    return res.status(500).json({
+      message: 'no tag specified',
+    });
+  }
+  db.posts.postsByTag(req.query.tag, req.query.order).then((data)=>{
+    res.json(data);
+  }).catch((e)=>{
+    res.status(500).json({
+      message: e.message,
+    });
+  });
+});
+
+/**
  * Returns the replies to a post specified by id
  *
  * @param {int} postid - The post id

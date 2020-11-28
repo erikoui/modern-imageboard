@@ -88,6 +88,25 @@ class Posts {
   }
 
   /**
+   * Returns all posts with the given hashtag
+   *
+   * @param {string} tag - the hashtag to search for
+   * @param {string} order - Order by (name,date,views,likes,replies)
+   */
+  async postsByTag(tag, order) {
+    // eslint-disable-next-line max-len
+    let sql = 'SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=p.id) AS r) AS  replies FROM posts p WHERE '+this.pgp.as.text(tag)+' = ANY(tags)';
+
+    if (order) {
+      sql += ' ORDER BY ';
+      sql += this.pgp.as.name(order) +' DESC';
+    } else {
+      sql+=' ORDER BY date DESC';
+    }
+    return this.db.any(sql);
+  }
+
+  /**
    * deletes posts
    * @param {int} id - post id
    */
