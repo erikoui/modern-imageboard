@@ -186,7 +186,7 @@ app.get('/replies', (req, res) => {
  *    message: 'post successful'
  * }
  */
-app.post('/newpost', async (req, res) => {
+app.post('/newpost', async (req, res, next) => {
   // TODO: check file extensions
   const filepaths = [];
   const allFileUploadPromises=[];
@@ -194,61 +194,68 @@ app.post('/newpost', async (req, res) => {
   try {
     if (req.files) {
       if (req.files.images.length>4) {
-        res.status(500).json({
-          message: 'More than 4 files selected',
-        });
+        throw new Error('More than 4 files selected');
+      }
+      // Apparently uploading one file turns the files[] array into a
+      // single object instead of an array with 1 object so we fix that
+      let files;
+      if (req.files.images.length>1) {
+        files=req.files.images;
       } else {
-        // Apparently uploading one file turns the files[] array into a
-        // single object instead of an array with 1 object so we fix that
-        let files;
-        if (req.files.images.length>1) {
-          files=req.files.images;
-        } else {
-          files=[req.files.images];
+        files=[req.files.images];
+      }
+      // loop all files
+      for (let i=0; i<files.length; i++) {
+        const img = files[i];
+        const allowedMimes=[
+          'image/jpeg',
+          'image/apng',
+          'image/bmp',
+          'image/gif',
+          'image/png',
+          'video/webm',
+          'image/webp',
+        ];
+          // If this file has mime type not in the list
+        if (allowedMimes.indexOf(img.mimetype)==-1) {
+          throw new Error('Bad file mime type: '+img.mimetype);
         }
-        // loop all files
-        for (let i=0; i<files.length; i++) {
-          const img = files[i];
-          // const extension = img.name.
-          // if ((/\.(gif|jpe?g|tiff?|png|webp|bmp|webm)$/i).test()) {
-          // move img to uploads directory, store the callback into a promise
-          img.mv('./uploads/' + img.name, function(err) {
-            const fileUploadPromise = new Promise(function(resolve, reject) {
-              if (err) {
-                reject(err);
-              } else {
-                resolve();
-              }
-            });
-            allFileUploadPromises.push(fileUploadPromise);
+      }
+      for (let i=0; i<files.length; i++) {
+        const img = files[i];
+        // move img to uploads directory, store the callback into a promise
+        img.mv('./uploads/' + img.name, function(err) {
+          const fileUploadPromise = new Promise(function(resolve, reject) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
           });
+          allFileUploadPromises.push(fileUploadPromise);
+        });
 
-          // push file details
-          filepaths.push('./uploads/' + img.name);
-        }
-        // when all the files have been uploaded update db and return ok
-        Promise.all(allFileUploadPromises).then(()=>{
-          db.posts.add(
-              req.body.name,
-              req.body.content,
-              filepaths,
-              tags,
-              req.body.replyto,
-          ).then(()=>{
-            res.json({
-              message: 'Post successful',
-            });
-          }).catch((e)=>{
-            res.status(500).json({
-              message: e.message,
-            });
+        // push file details
+        filepaths.push('./uploads/' + img.name);
+      }
+      // when all the files have been uploaded update db and return ok
+      Promise.all(allFileUploadPromises).then(()=>{
+        db.posts.add(
+            req.body.name,
+            req.body.content,
+            filepaths,
+            tags,
+            req.body.replyto,
+        ).then(()=>{
+          res.json({
+            message: 'Post successful',
           });
         }).catch((e)=>{
-          res.status(500).json({
-            message: e.message,
-          });
+          throw e;
         });
-      }
+      }).catch((e)=>{
+        throw e;
+      });
     } else {// no file to upload
       db.posts.add(
           req.body.name,
@@ -261,9 +268,7 @@ app.post('/newpost', async (req, res) => {
           message: 'Post successful',
         });
       }).catch((e)=>{
-        res.status(500).json({
-          message: e.message,
-        });
+        throw e;
       });
     }
   } catch (err) {
