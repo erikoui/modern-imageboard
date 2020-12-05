@@ -196,7 +196,7 @@ app.get('/replies', (req, res) => {
     db.posts.getReplies(postId).then((data) => {
       res.json({
         err: false,
-        ...data,
+        data: data,
       });
     }).catch((e) => {
       res.status(500).json({
