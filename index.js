@@ -130,7 +130,7 @@ app.get('/rootposts', (req, res) =>{
  * @param {string} tag = The hashtag to search for
  * @param {string} order = [name,date,views,likes,replies]
  *
- * @example GET /rootposts?order=likes
+ * @example GET /hashtag?order=likes
  *
  * @returns {
   *  [
@@ -343,7 +343,6 @@ app.put('/like', (req, res)=>{
     });
   });
 });
-
 
 // --------------- Start Server ----------------
 app.listen(PORT, () => console.log(`Listening on ${PORT}`));

@@ -122,7 +122,7 @@ class Posts {
    */
   async getReplies(id) {
     // eslint-disable-next-line max-len
-    return this.db.any('SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=p.id) AS r) AS  replies FROM posts p WHERE replyto=${id};', {
+    return this.db.any('SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=pp.id) AS r) AS  replies FROM posts pp WHERE id=${id} UNION SELECT *, (SELECT count(id) FROM (SELECT * FROM posts where replyto=p.id) AS r) AS  replies FROM posts p WHERE replyto=${id};', {
       id: id,
     });
   }
