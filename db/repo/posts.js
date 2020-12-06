@@ -111,7 +111,7 @@ class Posts {
    * @param {int} id - post id
    */
   async deleteById(id) {
-    return this.db.any('DELETE FROM posts WHERE id=${id};', {
+    return this.db.one('DELETE FROM posts WHERE id=${id} RETURNING *;', {
       id: id,
     });
   }

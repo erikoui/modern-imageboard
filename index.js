@@ -210,6 +210,45 @@ app.get('/replies', (req, res) => {
   }
 });
 
+// TODO authenticate using middlewarez
+// TODO test this method
+/**
+ * Deletes a post specified by id
+ * Authenticates by checking the request body for a password
+ * 
+ * request: DELETE /delete?postid=283
+ * body: {pass:'admin'}
+ */
+app.delete('/delete', (req,res)=>{
+  // const password = req.body.pass;
+  // if(!password){
+  //   return res.status(401).json({
+  //     message:'No password specified',
+  //   });
+  // }
+  // if(!(password==='admin')){
+  //   return res.status(401).json({
+  //     message:'Wrong password',
+  //   });
+  // }
+  const postId = req.query.postid;
+  if (postId) {
+    db.posts.deleteById(postId).then((data) => {
+      res.json({
+        deletedPost: data,
+      });
+    }).catch((e) => {
+      res.status(500).json({
+        message: e.message,
+      });
+    });
+  } else {
+    return res.status(500).json({
+      message: 'No post id specified (try: /replies?postid=2)',
+    });
+  }
+})
+
 /**
  * Adds a new post to the database, and saves the files to the server
  *
